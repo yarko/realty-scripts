@@ -180,7 +180,7 @@ def promote():
     valid = level2
     while entry := get_entry():
         if valid(entry):
-            entry[0][-1] = 1
+            entry[0][-1] = "1"
         # other than this edit, print everything
         for line in entry:
             print(line)
