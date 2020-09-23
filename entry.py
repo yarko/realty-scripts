@@ -19,14 +19,11 @@ def get_entries(lines, matchme):
     a_match = False
     for l in lines:
         # print(f'...{l}')
-        if l.startswith('[') and l.lower().find(matchme.lower()) >=0:
-            a_match = True
-            print(l)
-            continue
         if a_match and l.startswith((' ', '\t')):
             print(l)
-            # to keep from making noisy output,
-            #  include empty lines after entry w/ entry
+        elif l.startswith('[') and l.lower().find(matchme.lower()) >=0:
+            a_match = True
+            print(l)
         else:
             a_match = False
 
