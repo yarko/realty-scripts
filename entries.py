@@ -17,11 +17,12 @@ def get_entries(lines, matchme):
     print all listing entries containing matchme;
     '''
     a_match = False
+    matchme_lower = matchme.lower()  # just do this once
     for l in lines:
         # print(f'...{l}')
         if a_match and l.startswith((' ', '\t')):
             print(l)
-        elif l.startswith('[') and l.lower().find(matchme.lower()) >=0:
+        elif l.startswith('[') and l.lower().find(matchme_lower) >= 0:
             a_match = True
             print(l)
         else:
