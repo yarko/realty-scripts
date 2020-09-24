@@ -55,20 +55,14 @@ if len(argv) < 2 or argv[1].startswith('-'):
     help()
 
 
-'''
 ## for testing / debugging:
-with open('Geneva_tri-cities.md', 'r') as f:
+'''
+with open('../IL/2020-09-20_viewings.md', 'r') as f:
     for line in f:
         lines.append(line.rstrip())
-
-# a generator for lines (although could just do this in an input stream):
-# glines = (l for l in lines)
-
-# rather than use a generator, will pop / insert in the reversed list
-#  BUT when working, will simply get this from stdin
-
-## end test section
 '''
+## end test section
+
 # For production use (alternative to test section above):
 for line in stdin:
     lines.append(line.rstrip())
@@ -99,14 +93,15 @@ def _get_entry(lines):
                 #  include empty lines after entry w/ entry
                 if l.startswith((' ', '\t')) or l == '' :
                     entry.append(l)
-                    continue
-                # push the line back
-                lines.append(l)
-                return(entry)
+                else:
+                    # push the line back
+                    lines.append(l)
+                    return(entry)
         # simply print out all in between entries
-        print(l)
+        else:
+            print(l)
     # all done - nothing left:
-    return []
+    return entry   # be sure to return last entry
 
 
 def get_entry():
