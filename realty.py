@@ -207,11 +207,11 @@ def rm_no():
 
 def get_contract():
     '''
-    separate under-contract x'd out ones separately
+    separate under-contract or off-market x'd out ones separately
     - will need to be more consistent of "contract" or "contingent" to mark them
     - I think I'll mark c/{n}, e.g.  c/1;  c/2;  and so on...
     '''
-    contingent = lambda s: s[0][:-1].endswith('c/')
+    contingent = lambda s: s[0][:-1].endswith(('c/','o/'))
 
     while entry := get_entry():
         if contingent(entry):
@@ -221,11 +221,11 @@ def get_contract():
 
 def rm_contract():
     '''
-    separate under-contract x'd out ones separately
+    separate under-contract or off-market x'd out ones separately
     - will need to be more consistent of "contract" or "contingent" to mark them
     - I think I'll mark c/{n}, e.g.  c/1;  c/2;  and so on...
     '''
-    contingent = lambda s: s[0][:-1].endswith('c/')
+    contingent = lambda s: s[0][:-1].endswith(('c/','o/'))
 
     while entry := get_entry():
         if not contingent(entry):
@@ -261,12 +261,11 @@ def get_nointerest():
 
     front_lines = lines[f:i]
     front_lines.reverse()
-    removal = level4
+    removal = lambda s: s[0].startswith('[x]') or level4(s)
     while entry := _get_entry(front_lines):
         if removal(entry):
             for line in entry:
                 print(line)
-
 
 
 def rm_nointerest():
@@ -276,7 +275,8 @@ def rm_nointerest():
     f = _next_item_index(lines)
     front_lines = lines[f:i]
     front_lines.reverse()
-    removal = level4
+    # removal = level4
+    removal = lambda s: s[0].startswith('[x]') or level4(s)
     while entry := _get_entry(front_lines):
         if not removal(entry):
             for line in entry:
