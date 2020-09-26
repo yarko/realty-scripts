@@ -253,26 +253,32 @@ interest_marker = lambda s: s.index(NO_INTEREST)
 def get_nointerest():
     '''
     '''
-    i = interest_marker(lines)
-    f = _next_item_index(lines)
-    for line in lines[i:]:
-        print(line)
+    try:
+        i = interest_marker(lines)
+        for line in lines[i:]:
+            print(line)
+    except:
+        i = len(lines)
     # now get level4 items in the other part of the list:
     # ToDo: might want to also find the first lines entry
-
-    front_lines = lines[f:i]
-    front_lines.reverse()
-    removal = lambda s: s[0].startswith('[x]') or level4(s)
-    while entry := _get_entry(front_lines):
-        if removal(entry):
-            for line in entry:
-                print(line)
+    finally:
+        f = _next_item_index(lines)
+        front_lines = lines[f:i]
+        front_lines.reverse()
+        removal = lambda s: s[0].startswith('[x]') or level4(s)
+        while entry := _get_entry(front_lines):
+            if removal(entry):
+                for line in entry:
+                    print(line)
 
 
 def rm_nointerest():
     '''
     '''
-    i = interest_marker(lines)
+    try:
+        i = interest_marker(lines)
+    except:
+        i = len(lines)
     f = _next_item_index(lines)
     front_lines = lines[f:i]
     front_lines.reverse()
