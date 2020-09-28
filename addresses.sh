@@ -6,7 +6,7 @@ grep -h -i '^\[.\]' - | sed -E -e '
 # clear checkbox front end
 s/^\[.\][ ]*//
 # clear any number of categories from end
-s/([ \t]*[cvo]*\/[0-9])+//
+s/([ \t]*[a-z]*\/[0-9])+//
 # one-off special cases: notes, parenthesized comments
 s/[ ]*<<==.*//
 s/\(.*\)//' #  | sort | uniq -D
