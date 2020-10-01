@@ -298,6 +298,8 @@ run_table = {
     "rm_no": rm_no,
     "get_contract": get_contract,
     "rm_contract": rm_contract,
+    "get_contingent": get_contract,
+    "rm_contingent": rm_contract,
     "get_nointerest": get_nointerest,
     "rm_nointerest": rm_nointerest,
     "promote": promote,
