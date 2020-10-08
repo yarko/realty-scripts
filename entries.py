@@ -3,9 +3,14 @@
 get an entry based on a single address
 - for each cmd line arg, any address from stdin
   which matches any part of the argv will be emitted
+
+invoke script named with leading 'd' to generate dated entries;
+e.g.  entries => dentries, d_entries, dated_entries
 '''
 # for use as a filter;
 from sys import stdin, stdout, argv
+from datetime import datetime  # for date printing
+from os.path import basename
 
 lines = []
 for line in stdin:
@@ -24,7 +29,7 @@ def get_entries(lines, matchme):
             print(l)
         elif l.startswith('[') and l.lower().find(matchme_lower) >= 0:
             a_match = True
-            print(l)
+            print('\n'+l)  # I think I'd like to space separate entries;
         else:
             a_match = False
 
@@ -33,6 +38,10 @@ def get_entries(lines, matchme):
 for each argument:
     print out all address entries which match arg
 '''
+
+# either works w/ symlinks: print(basename(argv[0]), basename(__file__))
+if basename(__file__).startswith('d'):   # prefix with date
+    print(f"---\n{datetime.now().strftime('%Y-%m-%d')}")
 
 if len(argv) == 1:
     # just print all entries, unembellished
