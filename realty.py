@@ -22,25 +22,32 @@ def help():
     this_script = argv[0].rsplit('/', 1)[-1]
     usage = f'''usage:
         {this_script} [command] < [input]
+        {this_script} -f [filename] [command]
         {this_script} -h  <= this help
-
-        All input is thru stdin.
 
         most commands are two words:
             'get' or 'rm' applied to any of the following:
 
-            current   (current view batch)
-                'active' modifies to exclude contingents, e.g.:
+            new       (new items - /0)
+            current   (current view batch /1)
+                    'active' modifies to exclude contingents, e.g.:
                     $ {this_script} rm current active
-            no        (not available)
+            no        (not available); includes /4 (no interest)
             contract  (under contingency)
             nointerest (we've decided we're not interested)
         special command:
-            promote   (moves 2nd tier /2 selections to first tier,
-                       for next viewing cycle)
+            promote   (moves 2nd tier /2 & new /0 selections to first tier,
+                      for next viewing cycle).
+                      valid options:
+                        old - only promote /2
+                        /2
+                        new - only promote new /0
+                        /1
+                        all - /2 and /0 (which is default)
 
         example:
             $ {this_script} get contract
+            $ {this_script} promote /0
 
         returns everything but removes unavailable entries:
             $ {this_script} rm no
@@ -51,21 +58,19 @@ def help():
 
 
 # early help:
-if len(argv) < 2 or argv[1].startswith('-'):
+if len(argv) < 2 or argv[1].startswith('-h'):
     help()
 
-
-## for testing / debugging:
-'''
-with open('../IL/2020-09-20_viewings.md', 'r') as f:
-    for line in f:
+if argv[1].startswith('-f'):  # input file specified
+    with open(argv[2], 'r') as f:
+        for line in f:
+            lines.append(line.rstrip())
+    # delete argv 1 and 2:
+    del argv[1:3]
+else:  # use stdin
+    # For production use (alternative to test section above):
+    for line in stdin:
         lines.append(line.rstrip())
-'''
-## end test section
-
-# For production use (alternative to test section above):
-for line in stdin:
-    lines.append(line.rstrip())
 
 
 def _next_item_index(lines):
@@ -120,12 +125,57 @@ def get_entry():
     return _get_entry(lines)
 
 
+# ToDo: sort out the blurry boundaries between this,
+#   get_entry() and _get_entry() - and reduce;
+def fetch_entries(select):
+    while entry := get_entry():
+        if select(entry):
+            for line in entry:
+                print(line)
+
+
+
 level0 = lambda s: s[0].endswith('/0')   # new entry
+not_level0 = lambda s: not s[0].endswith('/0')   # new entry
 level1 = lambda s: s[0].endswith('/1')   # current viewing request
+not_level1 = lambda s: not s[0].endswith('/1')   # current viewing request
 level2 = lambda s: s[0].endswith('/2')   # next viewing request
+not_level2 = lambda s: not s[0].endswith('/2')   # next viewing request
 level3 = lambda s: s[0].endswith('/3')   # maybe some next viewing cycle
-# for future use:  edit "not interested"s not at the end:
+not_level3 = lambda s: not s[0].endswith('/3')   # maybe some next viewing cycle
 level4 = lambda s: s[0].endswith('/4')   # maybe some next viewing cycle
+not_level4 = lambda s: not s[0].endswith('/4')   # maybe some next viewing cycle
+
+def get_new(all=True):
+    '''
+    extract new address lists
+    - defined by:
+        - ^[ ].* \/0$
+    - only returns non-rejected (not starting w/ [x]),
+      unless all = True
+    '''
+    # pass entry: so, valid(entry) assumes first line is the checkbox
+    if all:
+        valid = level0
+    else:
+        valid = lambda s: s[0].startswith('[ ]') and level0(s)
+
+    fetch_entries(valid)
+
+
+def rm_new(all=True):
+    ''' -current
+    inverse of get_current()
+    i.e. return all lines, but the current ones
+    '''
+    # pass entry: so, valid(entry) assumes first line is the checkbox
+    # valid = lambda s: not level1(s)
+    if all:
+        select = not_level0
+    else:
+        select = lambda s: not (s[0].startswith('[ ]') and level0(s))
+ 
+    fetch_entries(select)
 
 
 def get_current(all=True):
@@ -142,10 +192,7 @@ def get_current(all=True):
     else:
         valid = lambda s: s[0].startswith('[ ]') and level1(s)
 
-    while entry := get_entry():
-        if valid(entry):
-            for line in entry:
-                print(line)
+    fetch_entries(valid)
 
 
 def rm_current(all=True):
@@ -156,27 +203,36 @@ def rm_current(all=True):
     # pass entry: so, valid(entry) assumes first line is the checkbox
     # valid = lambda s: not level1(s)
     if all:
-        valid = level1
+        valid = not_level1
     else:
-        valid = lambda s: s[0].startswith('[ ]') and level1(s)
+        valid = lambda s: not (s[0].startswith('[ ]') and level1(s))
 
-    while entry := get_entry():
-        if not valid(entry):
-            for line in entry:
-                print(line)
+    fetch_entries(valid)
 
 
-def promote():
+def promote(all=True):
     '''
     plus advance all secondary entries
-    i.e. convert /2's to /1's
+    i.e. convert /2's and /0's to /1's
+
     '''
 
-    valid = level2
+    if all is False:
+        lvlmrk = "/2"  # promote only level-2, "next-to-view"
+        valid = level2
+    elif all is True:
+        valid = lambda s: (level0(s) or level2(s))
+    else:
+        lvlmrk = all   # expect it to be either "/2" or "/0"
+        valid = level0 if lvlmrk=="/0" else level2
+
     while entry := get_entry():
         if valid(entry):
             s = entry[0]
-            entry[0] = s.replace("/2", "/1")
+            if (all is True) and (s[-2:] in ("/2", "/0")):
+                entry[0] = s.replace(s[-2:], "/1")
+            elif s[-2:] == lvlmrk:
+                entry[0] = s.replace(lvlmrk, "/1")
         # other than this edit, print everything
         for line in entry:
             print(line)
@@ -186,24 +242,16 @@ def get_no():
     ''' +no
     extract x'd out addresses
     '''
-    valid = lambda s: s[0].startswith(('[x]', '[X]'))
-
-    while entry := get_entry():
-        if valid(entry):
-            for line in entry:
-                print(line)
+    valid = lambda s: (s[0].startswith(('[x]', '[X]')) or level4(s))
+    fetch_entires(valid)
 
 
 def rm_no():
     ''' -no
     return all but the x'd out
     '''
-    valid = lambda s: s[0].startswith(('[x]', '[X]'))
-
-    while entry := get_entry():
-        if not valid(entry):
-            for line in entry:
-                print(line)
+    valid = lambda s: not (s[0].startswith(('[x]', '[X]')) or level4(s))
+    fetch_entries(valid)
 
 
 def get_contract():
@@ -212,12 +260,9 @@ def get_contract():
     - will need to be more consistent of "contract" or "contingent" to mark them
     - I think I'll mark c/{n}, e.g.  c/1;  c/2;  and so on...
     '''
+    # ToDo:  will need to be tolerant of "viewd" markers here too, eg: vc/1 or cv/1
     contingent = lambda s: s[0][:-1].endswith(('c/','o/'))
-
-    while entry := get_entry():
-        if contingent(entry):
-            for line in entry:
-                print(line)
+    fetch_entries(contingent)
 
 
 def rm_contract():
@@ -226,22 +271,20 @@ def rm_contract():
     - will need to be more consistent of "contract" or "contingent" to mark them
     - I think I'll mark c/{n}, e.g.  c/1;  c/2;  and so on...
     '''
-    contingent = lambda s: s[0][:-1].endswith(('c/','o/'))
+    not_contingent = lambda s: not (s[0][:-1].endswith(('c/','o/')))
+    fetch_entries(not_contingent)
 
-    while entry := get_entry():
-        if not contingent(entry):
-            for line in entry:
-                print(line)
 
 # I think that's all the function I need;
 
 ## now, parse the options
 
-
 # these are the only two functions which depend on
 # non-reversed list:
 # - get_nointerest()
 # - rm_nointerest()
+
+# ToDo:  remove dependency on this line marker:
 
 # This line splits the file;
 # - note: this is different than unable to view / unavailable for viewing
@@ -292,6 +335,8 @@ def rm_nointerest():
 
 run_table = {
     # "get_entry": get_entry,
+    "get_new": get_new,
+    "rm_new": rm_new,  # may not need this
     "get_current": get_current,
     "rm_current": rm_current,
     "get_no": get_no,
@@ -306,6 +351,20 @@ run_table = {
 }
 
 
+# command line options for "*_current" and "promote"
+opts = {
+    # for *_current all=  option
+    "current": False,
+    "active": False,
+    # for "promote" all=  options
+    "old": False,       # code sets to "/2"
+    "notnew": False,
+    "/2": "/2",
+    "/0": "/0",
+    "new": "/0",
+    "all": True,    # not really needed (it's default)
+}
+
 # could also add extractor for /0 and /3 tiers;
 #  will if the need arises;
 
@@ -313,14 +372,19 @@ run_table = {
 if len(argv) < 2 or argv[1].startswith('-'):
     help()
 
+# grab simple option for current & promote commands
+if (len(argv)>3) or (argv[1]=="promote" and len(argv)>2):
+    opt = argv.pop()
+else:
+    opt = ""
+
 cmd = '_'.join(argv[1:3])  # cmd at most 2 words; leave other for option
 if cmd not in run_table:
     help()
 
-if len(argv) > 3 and argv[2] == 'current':
-    # I don't care what that last input param is:
-    #  "active", is fine; but doesn't really matter
-    run_table[cmd](all=False)  # only get active current viewings
+if opt in opts:
+    # run filter with option
+    run_table[cmd](all=opts[opt])  # only get active current viewings
 else:
     run_table[cmd]()
 
