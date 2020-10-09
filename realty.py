@@ -288,49 +288,27 @@ def rm_contract():
 
 # This line splits the file;
 # - note: this is different than unable to view / unavailable for viewing
-NO_INTEREST = '# Not interested in viewing:'
+## This is now GONE:
+# NO_INTEREST = '# Not interested in viewing:'
 # lambda, so we don't actually search if we don't need to:
-interest_marker = lambda s: s.index(NO_INTEREST)
+# interest_marker = lambda s: s.index(NO_INTEREST)
 
 
 def get_nointerest():
     '''
     '''
-    try:
-        i = interest_marker(lines)
-        for line in lines[i:]:
-            print(line)
-    except:
-        i = len(lines)
-    # now get level4 items in the other part of the list:
+    # get level4 items in the other part of the list:
     # ToDo: might want to also find the first lines entry
-    finally:
-        f = _next_item_index(lines)
-        front_lines = lines[f:i]
-        front_lines.reverse()
-        removal = lambda s: s[0].startswith('[x]') or level4(s)
-        while entry := _get_entry(front_lines):
-            if removal(entry):
-                for line in entry:
-                    print(line)
+    removal = lambda s: s[0].startswith('[x]') or level4(s)
+    fetch_entries(removal)
 
 
 def rm_nointerest():
     '''
     '''
-    try:
-        i = interest_marker(lines)
-    except:
-        i = len(lines)
-    f = _next_item_index(lines)
-    front_lines = lines[f:i]
-    front_lines.reverse()
     # removal = level4
-    removal = lambda s: s[0].startswith('[x]') or level4(s)
-    while entry := _get_entry(front_lines):
-        if not removal(entry):
-            for line in entry:
-                print(line)
+    no_removal = lambda s: not(s[0].startswith('[x]') or level4(s))
+    fetch_entries(no_removal)
 
 
 run_table = {
