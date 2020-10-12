@@ -16,7 +16,9 @@ As time went on, we made a key for quick notes:
 as well as adding our notes.
 
 It turned out that exporting dropbox paper files in markdown worked reasonably well in round-tripping,
-To make it work a tad better, things like paperfix.sh came about.
+To make it work a tad better, things like `paperfix.sh` came about.
+
+### `realty.py`
 At some point, we put town-name headers on our files, so that in updating and filtering content,
 I didn't want to remove general markdown lines which surrounded what had turned into checklist-structures
 (nested bullits under checklist items which were checkboxes).
